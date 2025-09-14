@@ -4,7 +4,7 @@ from json import JSONDecodeError, loads
 from hikari import GatewayBot, GuildTextChannel, Embed
 from urllib.parse import parse_qs
 from datetime import datetime, timezone
-from .github import App
+from utils.github import App
 
 class SmeeClient:
     

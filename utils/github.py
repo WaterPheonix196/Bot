@@ -2,7 +2,7 @@ import aiohttp
 import jwt
 import time
 from typing import Optional, Dict, Any
-from ..constants import GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_PRIVATE_KEY
+from constants import GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_PRIVATE_KEY
 
 class App:
     def __init__(self):

@@ -1,9 +1,8 @@
 from lightbulb import Loader
 from hikari import MessageCreateEvent
 
-from ..utils.gemini import ChatbotManager 
-from ..constants import GEMINI_API_KEYS
-from ..cobalt import bot
+from utils.gemini import ChatbotManager 
+from constants import GEMINI_API_KEYS
 
 chatbot_manager = ChatbotManager(GEMINI_API_KEYS)
 loader = Loader()
@@ -20,14 +19,14 @@ async def on_message_create(event: MessageCreateEvent):
     if event.is_bot or not content:
         return
 
-    me = bot.get_me()
+    me = event.app.get_me()
     
     if not me or me.id not in message.user_mentions_ids:
         return
 
     if message.author.id == 1367543367277219840 and "dev reset" in content:
         chatbot_manager.reset()
-        await event.message.respond("Sir yes sir! 🫡")
+        await event.message.respond("Sir yes sir! 🫡", reply=True)
         return
 
     messages = chatbot_manager.generate_response(content, message.author).split("|||")
@@ -37,11 +36,14 @@ async def on_message_create(event: MessageCreateEvent):
             msg = messages[i]
             if msg:
                 if len(str(msg)) > 100:
-                    await message.respond("I'm tired D:")
+                    await message.respond("I'm tired D:", reply=True)
                     break
                 if i == 0:
-                    await message.respond(msg)
+                    await message.respond(msg, reply=True)
                 elif i == 4:
                     await message.respond("Be right back :D")
                 else:
                     await message.respond(msg)
+
+def load(bot):
+    bot.add_plugin(loader)

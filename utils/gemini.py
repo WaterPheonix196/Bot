@@ -9,7 +9,7 @@ class ChatbotManager:
         self._keys = keys
         self._key_index = 0
         self.chat_history = []
-        self.system_instruction = (Path(__file__).parent.parent.parent / "ai-context.txt").read_text(encoding="utf-8")
+        self.system_instruction = (Path(__file__).parent.parent / "ai-context.txt").read_text(encoding="utf-8")
         self.client = Client(api_key=self._keys[self._key_index]) 
 
     def _cycle_key(self):
@@ -22,7 +22,7 @@ class ChatbotManager:
         self.client = Client(api_key=self._keys[self._key_index])
 
     def reset(self): 
-        self.system_instruction = (Path(__file__).parent.parent.parent / "ai-context.txt").read_text(encoding="utf-8")
+        self.system_instruction = (Path(__file__).parent.parent / "ai-context.txt").read_text(encoding="utf-8")
         self.chat_history = []
 
     def generate_response(self, message: str, author: User) -> str:
