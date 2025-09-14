@@ -39,7 +39,7 @@ class ChatbotManager:
 
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 contents=self.chat_history,
                 config=GenerateContentConfig(
                     system_instruction=self.system_instruction,
