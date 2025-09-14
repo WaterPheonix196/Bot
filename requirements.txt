@@ -1,0 +1,6 @@
+hikari
+hikari-lightbulb
+python-dotenv
+google-genai
+pyjwt
+cryptography
