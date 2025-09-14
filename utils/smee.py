@@ -80,7 +80,7 @@ class SmeeClient:
         if other_count > 0:
             display_counts["Other"] = other_count
 
-        file_types_str = " ".join(f"{lang} ({count})" for lang, count in display_counts.items())
+        file_types_str = ", ".join(f"{lang} ({count})" for lang, count in display_counts.items())
         return file_types_str if file_types_str else "No files changed"
 
     async def _on_event(self, payload):

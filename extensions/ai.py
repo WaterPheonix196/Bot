@@ -29,7 +29,11 @@ async def on_message_create(event: MessageCreateEvent):
         await event.message.respond("Sir yes sir! 🫡", reply=True)
         return
 
+    await event.app.rest.trigger_typing(event.channel_id)
     messages = chatbot_manager.generate_response(content, message.author).split("|||")
+
+    if not messages or all(not s.strip() for s in messages):
+        return
 
     for i in range(5):
         if i < len(messages):
@@ -44,6 +48,3 @@ async def on_message_create(event: MessageCreateEvent):
                     await message.respond("Be right back :D")
                 else:
                     await message.respond(msg)
-
-def load(bot):
-    bot.add_plugin(loader)
