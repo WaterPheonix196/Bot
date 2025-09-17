@@ -1,8 +1,8 @@
-import aiohttp
 import jwt
 import time
 from typing import Optional, Dict, Any
 from constants import GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_PRIVATE_KEY
+import aiohttp
 
 class App:
     def __init__(self):
@@ -18,12 +18,11 @@ class App:
         
         payload = {
             "iat": int(time.time()) - 60,
-            "exp": int(time.time()) + 600,
+            "exp": int(time.time()) + 400,
             "iss": self.app_id
         }
         
-        private_key_pem = self.private_key.replace("\\n", "\n").encode("utf-8")
-        jwt_token = jwt.encode(payload, private_key_pem, algorithm="RS256")
+        jwt_token = jwt.encode(payload, self.private_key, algorithm="RS256")
         url = f"https://api.github.com/app/installations/{self.installation_id}/access_tokens"
         headers = {
             "Authorization": f"Bearer {jwt_token}",
@@ -38,7 +37,9 @@ class App:
                     self._token_expires = time.time() + 3600
                     return self._token
                 else:
-                    raise Exception(f"Failed to get token: {response.status}")
+                    # Add more detailed error logging
+                    error_details = await response.text()
+                    raise Exception(f"Failed to get token: {response.status} - {error_details}")
 
     async def get_commit_line_changes(self, owner: str, repo: str, commit_sha: str) -> Optional[Dict[str, Any]]:
         try:
