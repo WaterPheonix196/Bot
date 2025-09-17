@@ -39,9 +39,6 @@ async def on_message_create(event: MessageCreateEvent):
         if i < len(messages):
             msg = messages[i]
             if msg:
-                if len(str(msg)) > 100:
-                    await message.respond("I'm tired D:", reply=True)
-                    break
                 if i == 0:
                     await message.respond(msg, reply=True)
                 elif i == 4:

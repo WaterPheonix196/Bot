@@ -37,9 +37,7 @@ class App:
                     self._token_expires = time.time() + 3600
                     return self._token
                 else:
-                    # Add more detailed error logging
-                    error_details = await response.text()
-                    raise Exception(f"Failed to get token: {response.status} - {error_details}")
+                    raise Exception(f"Failed to get token")
 
     async def get_commit_line_changes(self, owner: str, repo: str, commit_sha: str) -> Optional[Dict[str, Any]]:
         try:
@@ -83,5 +81,5 @@ class App:
             }
             
         except Exception as e:
-            print(f"Error getting commit data: {e}")
+            print(f"Error getting commit data")
             return None

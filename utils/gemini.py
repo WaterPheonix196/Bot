@@ -15,6 +15,7 @@ class ChatbotManager:
             config=GenerateContentConfig(
                 thinking_config=ThinkingConfig(thinking_budget=0),
                 system_instruction=self.system_instruction,
+                max_output_tokens=40
             )
         )
 
@@ -34,6 +35,7 @@ class ChatbotManager:
             config=GenerateContentConfig(
                 thinking_config=ThinkingConfig(thinking_budget=0),
                 system_instruction=self.system_instruction,
+                max_output_tokens=40
             )
         )
 
