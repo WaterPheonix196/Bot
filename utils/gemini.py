@@ -11,9 +11,8 @@ class ChatbotManager:
         self.system_instruction = (Path(__file__).parent.parent / "ai-context.txt").read_text(encoding="utf-8")
         self.client = Client(api_key=self._keys[self._key_index]) 
         self.chat = self.client.chats.create(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             config=GenerateContentConfig(
-                thinking_config=ThinkingConfig(thinking_budget=0),
                 system_instruction=self.system_instruction,
                 max_output_tokens=40
             )
@@ -31,9 +30,8 @@ class ChatbotManager:
     def reset(self): 
         self.system_instruction = (Path(__file__).parent.parent / "ai-context.txt").read_text(encoding="utf-8")
         self.chat = self.client.chats.create(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             config=GenerateContentConfig(
-                thinking_config=ThinkingConfig(thinking_budget=0),
                 system_instruction=self.system_instruction,
                 max_output_tokens=40
             )
