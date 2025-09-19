@@ -5,12 +5,13 @@ from hikari import GatewayBot, GuildTextChannel, Embed
 from urllib.parse import parse_qs
 from datetime import datetime, timezone
 from utils.github import App
+import hmac
+import hashlib
 
 class SmeeClient:
     def __init__(self, bot: GatewayBot, url: str, secret: str):
         self.url = url
         self.bot = bot
-        self._secret = secret.encode()
         self._app = App()
         self._running = False
         self._task = None
@@ -44,14 +45,17 @@ class SmeeClient:
                                 continue
                             
                             data_str = line[5:].strip()
+
                             try:
                                 data = loads(data_str)
+
                                 if data.get("x-github-event") == "push":
                                     body = data.get("body", {})
                                     payload_str = parse_qs(body).get("payload", [None])[0] if isinstance(body, str) else body.get("payload")
-                                    
+
                                     if payload_str:
                                         await self._on_event(loads(payload_str))
+
                             except JSONDecodeError:
                                 pass
             except:
