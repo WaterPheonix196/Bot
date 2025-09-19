@@ -101,7 +101,7 @@ class SmeeClient:
             file_types_str = self._calculate_file_types(payload)
             line_changes = await self._app.get_commit_line_changes(owner_name, repo_name, sha_id)
 
-            channel: GuildTextChannel = await self.bot.rest.fetch_channel("1418395142628311071")
+            channel: GuildTextChannel = await self.bot.rest.fetch_channel("1392449172895957013")
 
             embed = Embed(
                 title=f":rocket: New Commit to {repo_name}!",
