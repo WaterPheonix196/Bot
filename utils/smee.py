@@ -5,11 +5,13 @@ from hikari import GatewayBot, GuildTextChannel, Embed
 from urllib.parse import parse_qs
 from datetime import datetime, timezone
 from utils.github import App
+import hmac
 
 class SmeeClient:
-    def __init__(self, bot: GatewayBot, url: str):
+    def __init__(self, bot: GatewayBot, url: str, secret: str):
         self.url = url
         self.bot = bot
+        self._secret = secret.encode()
         self._app = App()
         self._running = False
         self._task = None
@@ -41,9 +43,18 @@ class SmeeClient:
                             line = line.decode("utf-8").strip()
                             if not line or line.startswith(":") or not line.startswith("data:"):
                                 continue
-                                
+                            
                             data_str = line[5:].strip()
                             try:
+                                signature = resp.headers.get("X-Hub-Signature-256")
+
+                                if signature:
+                                    sig_hash = signature.split("=")[1]
+                                    computed_hash = hmac.new(self._secret, data_str.encode(), hashlib.sha256).hexdigest()
+                                    if not hmac.compare_digest(computed_hash, sig_hash):
+                                        print("Webhook signature mismatch! Ignoring event.")
+                                        continue
+
                                 data = loads(data_str)
                                 if data.get("x-github-event") == "push":
                                     body = data.get("body", {})
@@ -100,7 +111,7 @@ class SmeeClient:
             file_types_str = self._calculate_file_types(payload)
             line_changes = await self._app.get_commit_line_changes(owner_name, repo_name, sha_id)
 
-            channel: GuildTextChannel = await self.bot.rest.fetch_channel("1392449172895957013")
+            channel: GuildTextChannel = await self.bot.rest.fetch_channel("1418395142628311071")
 
             embed = Embed(
                 title=f":rocket: New Commit to {repo_name}!",

@@ -26,7 +26,7 @@ bot = GatewayBot(
     ),
 )
 
-smee = SmeeClient(bot=bot, url=getenv("WEBHOOK_URL"))
+smee = SmeeClient(bot, getenv("WEBHOOK_URL"), getenv("WEBHOOK_SECRET"))
 client = client_from_app(bot)
 
 @bot.listen(StartingEvent)
