@@ -1,10 +1,9 @@
 from lightbulb import Loader
-from hikari import MessageCreateEvent
-
+from hikari import MessageCreateEvent, Permissions
 from utils.gemini import ChatbotManager 
-from constants import GEMINI_API_KEYS
+from os import getenv
 
-chatbot_manager = ChatbotManager(GEMINI_API_KEYS)
+chatbot_manager = ChatbotManager(getenv("GEMINI_API_KEYS").split(","))
 loader = Loader()
 
 @loader.listener(MessageCreateEvent)
@@ -24,24 +23,35 @@ async def on_message_create(event: MessageCreateEvent):
     if not me or me.id not in message.user_mentions_ids:
         return
 
-    if message.author.id == 1367543367277219840 and "dev reset" in content:
+    if "dev reset" in content.lower():
+        member = await event.app.rest.fetch_member(event.message.guild_id, event.author_id)
+        roles = await member.fetch_roles()
+        perms = Permissions.NONE
+        
+        for role in roles:
+            perms |= role.permissions
+        
+        if Permissions.ADMINISTRATOR not in perms:
+            await message.respond("You must have Administrator permissions to reset the chat.", reply=True)
+            return
+
         chatbot_manager.reset()
         await event.message.respond("Sir yes sir! 🫡", reply=True)
         return
 
     await event.app.rest.trigger_typing(event.channel_id)
-    messages = chatbot_manager.generate_response(content, message.author).split("|||")
-
-    if not messages or all(not s.strip() for s in messages):
+    response_text = chatbot_manager.generate_response(content, message.author)
+    
+    if not response_text or not response_text.strip():
         return
 
-    for i in range(5):
-        if i < len(messages):
-            msg = messages[i]
-            if msg:
-                if i == 0:
-                    await message.respond(msg, reply=True)
-                elif i == 4:
-                    await message.respond("Be right back :D")
-                else:
-                    await message.respond(msg)
+    messages = response_text.split("|||")
+    is_first = True
+
+    for msg in messages:
+        if msg and msg.strip():
+            if is_first:
+                await message.respond(msg, reply=True)
+                is_first = False
+            else:
+                await message.respond(msg)

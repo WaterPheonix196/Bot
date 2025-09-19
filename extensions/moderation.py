@@ -3,7 +3,7 @@ from hikari import Permissions, GuildTextChannel, Embed, MessageFlag
 
 loader = Loader()
 
-@loader.command(guilds=[1325571365079879774])
+@loader.command(guilds=[1325571365079879774, 1407043614068183221])
 class Clear(
     SlashCommand,
     name="clear",
@@ -34,7 +34,7 @@ class Clear(
         await ctx.respond(embed=embed, flags=MessageFlag.EPHEMERAL)
 
 
-@loader.command(guilds=[1325571365079879774])
+@loader.command(guilds=[1325571365079879774, 1407043614068183221])
 class Purge(
     SlashCommand,
     name="purge",
