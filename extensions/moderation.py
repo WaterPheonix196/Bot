@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta, timezone
 from lightbulb import SlashCommand, Loader, Context, invoke, integer, string, boolean
 from hikari import Permissions, GuildTextChannel, Embed, MessageFlag
-import re
+from utils.cmdutils import parse_duration, resolve_user, send_dm
 
 loader = Loader()
 
@@ -269,24 +270,123 @@ class Kick(
         )
         await ctx.respond(embed=embed, flags=MessageFlag.EPHEMERAL)
 
-async def resolve_user(client, user_input: str):
-    user_input = user_input.strip()
+@loader.command(guilds=[1325571365079879774, 1407043614068183221])
+class Mute(
+    SlashCommand,
+    name="mute",
+    description="Mute a user.",
+    default_member_permissions=Permissions.ADMINISTRATOR
+):
+    target = string("user", "The user to mute.")
+    reason = string("reason", "The reason for the mute.", default="No reason provided.")
+    duration = string("duration", "Duration of the mute, eg (10m, 10h, 1d, 2w, 10h, etc).", default="10m")
+    dm_recipient = boolean("dm_recipient", "DM the recipient about their mute?", default=True)
+    ephemeral = boolean("ephemeral", "Whether the response should be ephemeral.", default=True)
+    @invoke
+    async def invoke(self, ctx: Context) -> None:
+        succeeded = True
+        ephemeral = True
+        try:
+            options = {opt.name: opt.value for opt in ctx.options}
+            user = await resolve_user(ctx.client, options["user"])
 
-    if user_input in ("@everyone", "@here"):
-        raise ValueError("Cannot resolve @everyone or @here as a user.")
-    if user_input.startswith("<@&") and user_input.endswith(">"):
-        raise ValueError("a role isnt a person silly")
-    match = re.search(r"(?<!&)\d{15,20}", user_input)
-    if not match:
-        raise ValueError("invalid format, provide a ping or id.")
-    
-    user_id = int(match.group())
-    return await client.rest.fetch_user(user_id)  # maybe move to a general util file idk, same applies for send_dm func
+            reason = options.get("reason", "No reason provided")
+            dm_recipient = options.get("dm_recipient", True)
+            ephemeral = options.get("ephemeral", True)
+            raw_duration = options.get("duration", "10m")
+            try:
+                duration = parse_duration(raw_duration)
+            except ValueError as e:
+                raise ValueError(f"invalid duration format: {raw_duration} ({e})")
 
-async def send_dm(ctx: Context, user, title: str, description: str, color: int = 0xF93827):
-    try:
-        dm_channel = await ctx.client.app.rest.create_dm_channel(user.id)
-        embed = Embed(title=title, description=description, color=color)
-        await ctx.client.app.rest.create_message(dm_channel.id, embed=embed)
-    except Exception as e:
-        print(f"Could not DM user: {e}")
+            if duration > 40320:  # 28d is max i think? maybe
+                raise ValueError("Duration cannot exceed 28 days.")
+
+            if dm_recipient:
+                try:
+                    await send_dm(
+                        ctx,
+                        user,
+                        "Muted in Cobalt",
+                        f"You have been muted in Cobalt for {duration} minutes.\nReason: {reason}",
+                    )
+                except Exception as e:
+                    print(f"Could not DM user: {e}")
+
+            await ctx.client.app.rest.edit_member(
+                ctx.guild_id,
+                user.id,
+                communication_disabled_until=datetime.now(timezone.utc) + timedelta(minutes=duration),
+                reason=reason,
+            )
+
+            description = f"Muted <@{user.id}> (ID: {user.id}) for {raw_duration}\nReason: {reason}"
+        except Exception as e:
+            succeeded = False
+            description = f"Failed to mute user. {e}"
+
+        embed = Embed(
+            description=description,
+            color=(0x16C47F if succeeded else 0xF93827),
+        )
+        if ephemeral: 
+            flag = MessageFlag.EPHEMERAL 
+        else:
+            flag = None
+        await ctx.respond(embed=embed, flags=flag)
+
+@loader.command(guilds=[1325571365079879774, 1407043614068183221])
+class Unmute(
+    SlashCommand,
+    name="unmute",
+    description="Unmute a user.",
+    default_member_permissions=Permissions.ADMINISTRATOR
+):
+    target = string("user", "The user to unmute.")
+    reason = string("reason", "The reason for the unmute.", default="No reason provided.")
+    dm_recipient = boolean("dm_recipient", "DM the recipient about their unmute?", default=True)
+    ephemeral = boolean("ephemeral", "Whether the response should be ephemeral.", default=True)
+    @invoke
+    async def invoke(self, ctx: Context) -> None:
+        ephemeral = True
+        succeeded = True
+        try:
+            options = {opt.name: opt.value for opt in ctx.options}
+            user = await resolve_user(ctx.client, options["user"])
+
+            reason = options.get("reason", "No reason provided")
+            dm_recipient = options.get("dm_recipient", True)
+            ephemeral = options.get("ephemeral", True)
+
+            if dm_recipient:
+                try:
+                    await send_dm(
+                        ctx,
+                        user,
+                        "Unmuted in Cobalt",
+                        f"You have been unmuted in Cobalt.\nReason: {reason}",
+                    )
+                except Exception as e:
+                    print(f"Could not DM user: {e}")
+
+            await ctx.client.app.rest.edit_member(
+                ctx.guild_id,
+                user.id,
+                communication_disabled_until=None,
+                reason=reason,
+            )
+
+            description = f"Unmuted <@{user.id}> (ID: {user.id})\nReason: {reason}"
+        except Exception as e:
+            succeeded = False
+            description = f"Failed to unmute user. {e}"
+
+        embed = Embed(
+            description=description,
+            color=(0x16C47F if succeeded else 0xF93827),
+        )
+        if ephemeral: 
+            flag = MessageFlag.EPHEMERAL 
+        else:
+            flag = None
+        await ctx.respond(embed=embed, flags=flag)
