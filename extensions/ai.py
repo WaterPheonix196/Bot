@@ -34,9 +34,35 @@ async def on_message_create(event: MessageCreateEvent):
         if Permissions.ADMINISTRATOR not in perms:
             await message.respond("You must have Administrator permissions to reset the chat.", reply=True)
             return
+        # disable special mode on dev reset
+        if chatbot_manager.is_special_mode_enabled():
+            chatbot_manager.disable_special_mode()
 
         chatbot_manager.reset()
         await event.message.respond("Sir yes sir! 🫡", reply=True)
+        return
+
+    # special mode toggle command - admin only
+    if "special mode" in content.lower():
+        member = await event.app.rest.fetch_member(event.message.guild_id, event.author_id)
+        roles = await member.fetch_roles()
+        perms = Permissions.NONE
+
+        for role in roles:
+            perms |= role.permissions
+
+        if Permissions.ADMINISTRATOR not in perms:
+            await message.respond("You must have Administrator permissions to toggle special mode.", reply=True)
+            return
+
+        new_state = chatbot_manager.toggle_special_mode()
+        # reset chat so new context takes effect
+        chatbot_manager.reset()
+
+        if new_state:
+            await message.respond("Special mode enabled. Using special context.", reply=True)
+        else:
+            await message.respond("Special mode disabled. Reverting to normal context.", reply=True)
         return
 
     await event.app.rest.trigger_typing(event.channel_id)
