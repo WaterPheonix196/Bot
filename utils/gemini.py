@@ -17,16 +17,14 @@ class ChatbotManager:
         
         return None
 
-    def _new_chat(self):
+    def _new_chat(self, force_special: bool = False):
         if not self.client:
             return None
-        # select the system instruction file based on special mode
-        context_file = "special-context.txt" if self._special_enabled else "ai-context.txt"
+        context_file = "special-context.txt" if (self._special_enabled or force_special) else "ai-context.txt"
         context_path = Path(__file__).parent.parent / context_file
         try:
             system_instruction = context_path.read_text(encoding="utf-8")
         except Exception:
-            # fallback to an empty system instruction if reading fails
             system_instruction = ""
         return self.client.chats.create(
             model="gemini-2.5-flash-lite",
@@ -35,6 +33,7 @@ class ChatbotManager:
             ),
         )
 
+
     def _cycle_key(self):
         self._key_index += 1
         self.client = self._new_client()
@@ -42,13 +41,17 @@ class ChatbotManager:
 
     def enable_special_mode(self) -> None:
         self._special_enabled = True
+        self.chat = self._new_chat()
 
     def disable_special_mode(self) -> None:
         self._special_enabled = False
+        self.chat = self._new_chat() 
 
     def toggle_special_mode(self) -> bool:
         self._special_enabled = not self._special_enabled
+        self.chat = self._new_chat() 
         return self._special_enabled
+
 
     def is_special_mode_enabled(self) -> bool:
         return self._special_enabled
@@ -57,10 +60,16 @@ class ChatbotManager:
         self.chat = self._new_chat()
 
     def generate_response(self, message: str, author: User) -> str:
-        if not self.chat:
+        if not self.client:
             return "I'm currently out of power. Please try again later."
 
         try:
+            # If Nathan, always use yandere mode
+            if author.id == 1367543367277219840:
+                self.chat = self._new_chat(force_special=True)
+            else:
+                self.chat = self._new_chat()
+
             response = self.chat.send_message(
                 f"[Discord Id: {author.id}, Discord Name: {author.display_name}] says {message}"
             )
