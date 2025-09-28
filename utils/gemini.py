@@ -7,6 +7,7 @@ class ChatbotManager:
     def __init__(self, keys: list[str]):
         self._keys = keys
         self._key_index = 0
+        self._special_enabled = False
         self.client = self._new_client()
         self.chat = self._new_chat()
 
@@ -19,14 +20,14 @@ class ChatbotManager:
     def _new_chat(self):
         if not self.client:
             return None
-
-        context_path = Path(__file__).parent.parent / "ai-context.txt"
-
+        # select the system instruction file based on special mode
+        context_file = "special-context.txt" if self._special_enabled else "ai-context.txt"
+        context_path = Path(__file__).parent.parent / context_file
         try:
             system_instruction = context_path.read_text(encoding="utf-8")
         except Exception:
+            # fallback to an empty system instruction if reading fails
             system_instruction = ""
-
         return self.client.chats.create(
             model="gemini-2.5-flash-lite",
             config=GenerateContentConfig(
@@ -38,6 +39,19 @@ class ChatbotManager:
         self._key_index += 1
         self.client = self._new_client()
         self.chat = self._new_chat()
+
+    def enable_special_mode(self) -> None:
+        self._special_enabled = True
+
+    def disable_special_mode(self) -> None:
+        self._special_enabled = False
+
+    def toggle_special_mode(self) -> bool:
+        self._special_enabled = not self._special_enabled
+        return self._special_enabled
+
+    def is_special_mode_enabled(self) -> bool:
+        return self._special_enabled
 
     def reset(self):
         self.chat = self._new_chat()
